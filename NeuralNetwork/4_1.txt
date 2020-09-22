@@ -1,0 +1,13 @@
+Exercise 4.1 — NOR-Gate.
+Determine weights and a threshold for a perceptron that would act as a NOR-gate
+with three inputs.
+
+Answer:
+w1 = -1
+w2 = -1
+w3 = -1
+Threshold t = 0
+
+Exercise 4.2 — Neural ADDER.
+Make an adder out of perceptrons. Draw the network and give the corresponding
+weights and biases.
