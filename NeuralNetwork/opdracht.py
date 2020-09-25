@@ -6,13 +6,18 @@ random.seed(0)
 def calculateSigmoid(output):
     return (1.0 / (1.0 + math.e ** (output * -1)))
 
+def calculateSigmoidDerivative(output)
+    logisticOutput = calculateSigmoid(output)
+    return (logisticOutput * (1 - logisticOutput))
 
 # Very very customizable neural network :)
 class NeuralNetwork:
 
-    def __init__(self, inputLayerSize, outputLayerSize, learningRate = 0.1):
+    def __init__(self, inputLayerSize, outputLayerSize, trainingSet, isSigmoidNetwork = True, initializeRandom = True, learningRate = 0.1):
 
         self.learningRate = learningRate
+        self.isSigmoidNetwork = isSigmoidNetwork
+        self.initializeRandom = initializeRandom
 
         self.inputLayerSize = inputLayerSize
         self.outputLayerSize = outputLayerSize
@@ -25,10 +30,10 @@ class NeuralNetwork:
             self.inputLayer.append(Neuron())
         
         for i in range(inputLayerSize):
-            self.hiddenLayer.append(Neuron(None, None, self.inputLayer))
+            self.hiddenLayer.append(Neuron(isSigmoidNetwork, None, None, None, self.inputLayer))
         
         for i in range(outputLayerSize):
-            self.outputLayer.append(Neuron(None, None, self.hiddenLayer))
+            self.outputLayer.append(Neuron(isSigmoidNetwork, None, None, None, self.hiddenLayer))
 
 
     # Runs the network once with the networkInput as input value for the inputneurons. Expects a list the size of the inputvalues. 
@@ -51,6 +56,21 @@ class NeuralNetwork:
 
         else:
             raise Exception("networkInput cannot be of a different size than the inputLayer of the neural network")
+
+
+    def backpropagation(self, desiredOutput):
+        
+        # Updates all the error values for the outputLayer
+        for i in range(len(self.outputLayer)):
+            self.outputLayer[i].setError(desiredOutput - self.outputLayer[i].getOutput) * calculateSigmoidDerivative(self.outputLayer[i].getOutput())
+        
+        for i in range(len(self.hiddenLayer)):
+            # TODO berekend hidden layer error gebaseerd op sigmoid derivative van eigen output en (het huidige gewicht van de hiddenlayer * de output derivative van de output layer) 
+    
+    # 
+    def trainNetwork(self, ):
+        # TODO Itereer x keer -> Feedforward, backpropagate en update
+        return
 
 
     # Sets weight and threshold of targeted neuron. 
@@ -97,6 +117,8 @@ class Neuron:
         self.__bias = bias
         self.__threshold = threshold
         self.__output = 0
+        self.__error = 0
+        self.__neuronInput = 0
 
 
     # Prints all values of the neuron
@@ -109,7 +131,7 @@ class Neuron:
 
 
     # Used to generate an output using a single neuron instead of a network
-    # Inputs should be remembered outside of neuron scope. 
+    # Inputs should be remembered outside of neuron scope.
     # Neuron stores the output it generates from the given input based on if it is a perceptron or a sigmoid neuron
     # inputs is an array with inputs
     # Only used for excercise 4.3 A and 4.3 B
@@ -117,41 +139,38 @@ class Neuron:
 
         if len(inputs) == len(self.__weights):
 
-            tempOutput = 0
             for i in range(len(inputs)):
-                tempOutput += inputs[i] * self.__weights[i]
+                self.__neuronInput += inputs[i] * self.__weights[i]
                 
             if isSigmoid:
-                tempOutput += self.__bias
-                self.__output = calculateSigmoid(tempOutput)
+                self.__neuronInput += self.__bias
+                self.__output = calculateSigmoid(self.__neuronInput)
                 return self.__output
-            
+             
             else:
-                if tempOutput >= self.__threshold:
+                if self.__neuronInput >= self.__threshold:
                     self.__output = 1
-                    return self.__output
-
-                self.__output = 0
-                return self.__output
+                else:
+                    self.__output = 0
+                    
+            return self.__output
         
         raise Exception("Number of inputs does not match the number of weights given")
-
+        
 
     # Calculates new output based on outputs of all neurons in the previous layer based on their weight
     def feedForward(self):
-        # Temp variable for the output
-        tempOutput = 0
         
         for i in range(len(self.previousLayer)):
-            tempOutput += previousLayer[i].getOutput() * weights[i]
+            self.__neuronInput += previousLayer[i].getOutput() * weights[i]
 
         # Perceptron threshold checking and setting output
         if isSigmoid:
-            tempOutput += self.__bias
-            self.__output = calculateSigmoid(tempOutput)
+            self.__neuronInput += self.__bias
+            self.__output = calculateSigmoid(self.__neuronInput)
 
         else:
-            if tempOutput >= self.threshold:
+            if self.__neuronInput >= self.threshold:
                 self.output = 1
             else:
                 self.output = 0
@@ -159,11 +178,23 @@ class Neuron:
         return self.output
 
 
-    def update(self, desiredOutput):
-        self.__error = 0.5*((desiredOutput - self.__output)**2)
+    # Updates the neuron's weights and bias. Error and output should be updated before this function is called.
+    def update(self, learnRate):
+        
+        for i in range(len(self.__weights)):
+            self.__weights[i] += learnRate *  self.__error * self.__neuronInput[i]
 
 
-        return
+        self.__bias += learnRate * calculateSigmoidDerivative(self.__output)
+
+    # Getter function for the __neuronInput variable
+    def getNeuronInput(self):
+        return self.__neuronInput
+
+
+    # Sets the error of the neuron. Error is calculated in the network based on whether neuron is placed in hidden or output layer
+    def setError(self, value):
+        self.__error = value
 
 
     # Sets the weights of the neuron. Parameter expects a list
