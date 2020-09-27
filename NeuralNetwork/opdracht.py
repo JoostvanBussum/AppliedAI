@@ -6,7 +6,7 @@ random.seed(0)
 def calculateSigmoid(output):
     return (1.0 / (1.0 + math.e ** (output * -1)))
 
-def calculateSigmoidDerivative(output)
+def calculateSigmoidDerivative(output):
     logisticOutput = calculateSigmoid(output)
     return (logisticOutput * (1 - logisticOutput))
 
@@ -57,19 +57,32 @@ class NeuralNetwork:
         else:
             raise Exception("networkInput cannot be of a different size than the inputLayer of the neural network")
 
-
+    
+    # Updates all the errors in the entire network based on the desiredOutput. Network needs to be ran at least once before calling this function. 
     def backpropagation(self, desiredOutput):
-        
+
         # Updates all the error values for the outputLayer
         for i in range(len(self.outputLayer)):
-            self.outputLayer[i].setError(desiredOutput - self.outputLayer[i].getOutput) * calculateSigmoidDerivative(self.outputLayer[i].getOutput())
+            self.outputLayer[i].setError((desiredOutput - self.outputLayer[i].getOutput()) * calculateSigmoidDerivative(self.outputLayer[i].getNeuronInput()))
         
         for i in range(len(self.hiddenLayer)):
+            sumError = 0
+            
+            for j in range(len(self.outputLayer)):
+                
+                sumError += self.outputLayer[j].getError() * self.outputLayer[j].getWeights(i)
+            
+            self.hiddenLayer[i].setError(calculateSigmoidDerivative(self.hiddenLayer[i].getNeuronInput()) * sumError)
+
             # TODO berekend hidden layer error gebaseerd op sigmoid derivative van eigen output en (het huidige gewicht van de hiddenlayer * de output derivative van de output layer) 
     
-    # 
-    def trainNetwork(self, ):
+    
+    # Trainingdata: [[input values],[truth values]] ex: [ [ [1, 0], [0, 1] ], [ [1], [1] ] ]
+    def trainNetwork(self, trainingData, trainingIterations = 10000):
         # TODO Itereer x keer -> Feedforward, backpropagate en update
+        for i in range(trainingIterations):
+            for 
+
         return
 
 
@@ -117,7 +130,6 @@ class Neuron:
         self.__bias = bias
         self.__threshold = threshold
         self.__output = 0
-        self.__error = 0
         self.__neuronInput = 0
 
 
@@ -209,14 +221,23 @@ class Neuron:
  
     # Generates the new output, modifies variable to equate to new output and returns the newly generated value
     def getOutput(self):
-        return self.output
+        return self.__output
 
+    # Getter function for the __error variable
+    def getError(self):
+        return self.__error
+
+
+    # Getter function for the __weights variable, if no index is given the entire list is returned
+    def getWeights(self, index = None ):
+        if not index:
+            return self.__weights 
+        return self.__weights[index]
 
     # Used to set up input layer in neural network by injecting dataset values into neurons
     # to allow undefined network sizes to still generically retrieve outputs with feedforward looping
     def setOutput(self, value):
-        self.output = value
-
+        self.__output = value
 
 #================================================================== Main ==============================================================================
 
@@ -232,8 +253,14 @@ class Neuron:
 #network = NeuralNetwork(2, 2)
 
 # Delta Rule
-neuronRandomWeights = [random.randint(0, 1), random.randint(0, 1), random.randint(0, 1)]
-trainingNeuron = Neuron()
+#neuronRandomWeights = [random.randint(0, 1), random.randint(0, 1), random.randint(0, 1)]
+#trainingNeuron = Neuron()
+
+#================================================================== XOR ==================================================================
+
+xorData = [ [0,0,0], [0,1,1], [1,0,1], [1,1,0] ]
+
+network = NeuralNetwork(2,1, xorData)
 
 #network = NeuralNetwork(3, 1)
 #network.printNetwork()
