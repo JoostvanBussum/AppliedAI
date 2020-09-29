@@ -1,10 +1,13 @@
 import random
 import math
+import numpy as np
 
 random.seed(0)
 
 def calculateSigmoid(output):
-    return (1.0 / (1.0 + math.e ** (output * -1)))
+    #print("sigmoid input: ", output)
+    #print("sigmoid result: ", (1 / (1 + (math.e ** (-output)))))
+    return (1 / (1 + (math.e ** (-output))))
 
 def calculateSigmoidDerivative(output):
     logisticOutput = calculateSigmoid(output)
@@ -13,11 +16,10 @@ def calculateSigmoidDerivative(output):
 # Very very customizable neural network :)
 class NeuralNetwork:
 
-    def __init__(self, inputLayerSize, outputLayerSize, trainingSet, isSigmoidNetwork = True, initializeRandom = True, learningRate = 0.1):
+    def __init__(self, inputLayerSize, outputLayerSize, isSigmoidNetwork = True, learningRate = 0.1):
 
-        self.learningRate = learningRate
+        self.learnRate = learningRate
         self.isSigmoidNetwork = isSigmoidNetwork
-        self.initializeRandom = initializeRandom
 
         self.inputLayerSize = inputLayerSize
         self.outputLayerSize = outputLayerSize
@@ -26,14 +28,29 @@ class NeuralNetwork:
         self.hiddenLayer = []
         self.outputLayer = []
 
-        for i in range(inputLayerSize):
+        # Initialize inputlayer with "fake" neurons so we can input data into the network
+        for i in range(self.inputLayerSize):
             self.inputLayer.append(Neuron())
         
-        for i in range(inputLayerSize):
-            self.hiddenLayer.append(Neuron(isSigmoidNetwork, None, None, None, self.inputLayer))
+        # Initialize hidden layer
+        for i in range(self.inputLayerSize):
+            
+            # Create list with random weights equal to the size of the inputlayerSize
+            neuronWeights = []
+            for j in range(self.inputLayerSize):
+                neuronWeights.append(random.uniform(-1,1))
+
+            self.hiddenLayer.append(Neuron(isSigmoidNetwork, neuronWeights, random.uniform(-1,1), random.uniform(-1,1), self.inputLayer))
         
-        for i in range(outputLayerSize):
-            self.outputLayer.append(Neuron(isSigmoidNetwork, None, None, None, self.hiddenLayer))
+        # Initialize output layer
+        for i in range(self.outputLayerSize):   
+            
+            # Create list with random weights equal to the size of the hiddenLayerSize      
+            neuronWeights = []
+            for j in range(self.inputLayerSize):
+                neuronWeights.append(random.uniform(-1,1))
+                
+            self.outputLayer.append(Neuron(isSigmoidNetwork, neuronWeights, random.uniform(-1,1), random.uniform(-1,1), self.hiddenLayer))
 
 
     # Runs the network once with the networkInput as input value for the inputneurons. Expects a list the size of the inputvalues. 
@@ -42,7 +59,7 @@ class NeuralNetwork:
         networkOutput = []
 
         # Inputs the given parameters 
-        if len(networkInput) == len(self.inputLayerSize):
+        if len(networkInput) == len(self.inputLayer):
             for i in range(len(self.inputLayer)):
                 self.inputLayer[i].setOutput(networkInput[i])
 
@@ -57,34 +74,44 @@ class NeuralNetwork:
         else:
             raise Exception("networkInput cannot be of a different size than the inputLayer of the neural network")
 
-    
+
     # Updates all the errors in the entire network based on the desiredOutput. Network needs to be ran at least once before calling this function. 
-    def backpropagation(self, desiredOutput):
+    def __backpropagation(self, desiredOutput):
 
         # Updates all the error values for the outputLayer
         for i in range(len(self.outputLayer)):
-            self.outputLayer[i].setError((desiredOutput - self.outputLayer[i].getOutput()) * calculateSigmoidDerivative(self.outputLayer[i].getNeuronInput()))
+            self.outputLayer[i].setError((desiredOutput[i] - self.outputLayer[i].getOutput()) * calculateSigmoidDerivative(self.outputLayer[i].getNeuronInput()))
         
         for i in range(len(self.hiddenLayer)):
-            sumError = 0
+            sumError = 0.0
             
             for j in range(len(self.outputLayer)):
-                
-                sumError += self.outputLayer[j].getError() * self.outputLayer[j].getWeights(i)
+                sumError += float(self.outputLayer[j].getError()) * self.outputLayer[j].getWeights(i)
             
-            self.hiddenLayer[i].setError(calculateSigmoidDerivative(self.hiddenLayer[i].getNeuronInput()) * sumError)
+            self.hiddenLayer[i].setError(calculateSigmoidDerivative(self.hiddenLayer[i].getNeuronInput()) * sumError)    
 
-            # TODO berekend hidden layer error gebaseerd op sigmoid derivative van eigen output en (het huidige gewicht van de hiddenlayer * de output derivative van de output layer) 
+
+    # Updates the entire network. Should only be ran after calling backpropagation
+    def __updateNetwork(self):
+        for i in range(len(self.outputLayer)):
+            self.outputLayer[i].update(self.learnRate)
+        
+        for i in range(len(self.hiddenLayer)):
+            self.hiddenLayer[i].update(self.learnRate)
     
     
+    # gelijk aan uitvoerlayer size - invoerData: [[1, 2, 3, 4], [1, 3, 2, 4], []]
+    # gelijk aan uitvoerlayer size - trainingDataDesiredOutput: [[0.567, 0.023, 0.490], []]
     # Trainingdata: [[input values],[truth values]] ex: [ [ [1, 0], [0, 1] ], [ [1], [1] ] ]
-    def trainNetwork(self, trainingData, trainingIterations = 10000):
-        # TODO Itereer x keer -> Feedforward, backpropagate en update
+    def trainNetwork(self, trainingDataInput, trainingDataDesiredOutput, trainingIterations = 10000):
+        
         for i in range(trainingIterations):
-            for 
-
-        return
-
+            
+            for trainingExampleIndex in range(len(trainingDataInput)):
+                self.generateNetworkOutputOnce(trainingDataInput[trainingExampleIndex])
+                self.__backpropagation(trainingDataDesiredOutput[trainingExampleIndex])
+                self.__updateNetwork()
+            
 
     # Sets weight and threshold of targeted neuron. 
     # Layer is a boolean: 1 is the hiddenLayer and 0 the outputLayer
@@ -92,18 +119,19 @@ class NeuralNetwork:
     def calibrateNeuron(self, neuron, layer, newWeights, newThreshold = None):
         
         if layer and neuron < len(hiddenLayer):
-            hiddenLayer[neuron].setWeight(newWeights)
+            self.hiddenLayer[neuron].setWeight(newWeights)
             if newThreshold:
-                hiddenLayer[neuron].setThreshold(newThreshold)
+                self.hiddenLayer[neuron].setThreshold(newThreshold)
 
         elif not layer and neuron < len(outputLayer):
-            outputLayer[neuron].setWeight(newWeights)
-            outputLayer[neuron].setThreshold(newThreshold)
+            self.outputLayer[neuron].setWeight(newWeights)
+            self.outputLayer[neuron].setThreshold(newThreshold)
             
             if newThreshold:
-                outputLayer[neuron].setThreshold(newThreshold)
+                self.outputLayer[neuron].setThreshold(newThreshold)
 
 
+    # Print the network for debug purposes
     def printNetwork(self):
         print("\n Inputlayer: \n")
         for i in range(len(self.inputLayer)):
@@ -131,6 +159,7 @@ class Neuron:
         self.__threshold = threshold
         self.__output = 0
         self.__neuronInput = 0
+        self.__isSigmoid = isSigmoid
 
 
     # Prints all values of the neuron
@@ -139,6 +168,7 @@ class Neuron:
         print("previousLayer: ", self.previousLayer)
         print("Weights: ", self.__weights)
         print("Threshold: ", self.__threshold)
+        print("Bias: ", self.__bias)
         print("Output: ", self.__output)
 
 
@@ -150,11 +180,12 @@ class Neuron:
     def generateSingleNeuronOutput(self, inputs):
 
         if len(inputs) == len(self.__weights):
+            self.__neuronInput = 0.0
 
             for i in range(len(inputs)):
                 self.__neuronInput += inputs[i] * self.__weights[i]
                 
-            if isSigmoid:
+            if self.__isSigmoid:
                 self.__neuronInput += self.__bias
                 self.__output = calculateSigmoid(self.__neuronInput)
                 return self.__output
@@ -172,32 +203,33 @@ class Neuron:
 
     # Calculates new output based on outputs of all neurons in the previous layer based on their weight
     def feedForward(self):
-        
+        self.__neuronInput = 0.0
+
         for i in range(len(self.previousLayer)):
-            self.__neuronInput += previousLayer[i].getOutput() * weights[i]
+            self.__neuronInput += self.previousLayer[i].getOutput() * self.__weights[i]
 
         # Perceptron threshold checking and setting output
-        if isSigmoid:
+        if self.__isSigmoid:
             self.__neuronInput += self.__bias
             self.__output = calculateSigmoid(self.__neuronInput)
 
         else:
-            if self.__neuronInput >= self.threshold:
-                self.output = 1
+            if self.__neuronInput >= self.__threshold:
+                self.__output = 1
             else:
-                self.output = 0
+                self.__output = 0
 
-        return self.output
+        return self.__output
 
 
     # Updates the neuron's weights and bias. Error and output should be updated before this function is called.
     def update(self, learnRate):
         
         for i in range(len(self.__weights)):
-            self.__weights[i] += learnRate *  self.__error * self.__neuronInput[i]
+            self.__weights[i] += learnRate *  self.__error * self.previousLayer[i].getOutput()
 
+        self.__bias += learnRate * self.__error
 
-        self.__bias += learnRate * calculateSigmoidDerivative(self.__output)
 
     # Getter function for the __neuronInput variable
     def getNeuronInput(self):
@@ -229,9 +261,7 @@ class Neuron:
 
 
     # Getter function for the __weights variable, if no index is given the entire list is returned
-    def getWeights(self, index = None ):
-        if not index:
-            return self.__weights 
+    def getWeights(self, index):
         return self.__weights[index]
 
     # Used to set up input layer in neural network by injecting dataset values into neurons
@@ -253,17 +283,54 @@ class Neuron:
 #network = NeuralNetwork(2, 2)
 
 # Delta Rule
-#neuronRandomWeights = [random.randint(0, 1), random.randint(0, 1), random.randint(0, 1)]
 #trainingNeuron = Neuron()
 
 #================================================================== XOR ==================================================================
+"""
+xorData = [ [0,0], [0,1], [1,0], [1,1] ]
+xorDataOutput = [ [0], [1], [1], [0] ]
 
-xorData = [ [0,0,0], [0,1,1], [1,0,1], [1,1,0] ]
+network = NeuralNetwork(2, 1, False, 0.1)
+network.printNetwork()
 
-network = NeuralNetwork(2,1, xorData)
+network.trainNetwork(xorData, xorDataOutput, 100000)
+network.printNetwork()
 
-#network = NeuralNetwork(3, 1)
-#network.printNetwork()
+tempNetworkOutput1 = network.generateNetworkOutputOnce([0,0])
+tempNetworkOutput2 = network.generateNetworkOutputOnce([0,1])
+tempNetworkOutput3 = network.generateNetworkOutputOnce([1,0])
+tempNetworkOutput4 = network.generateNetworkOutputOnce([1,1])
 
-#x = calculateSigmoid(1)
-#print(x)
+print("Output 1: ", tempNetworkOutput1)
+print("Output 2: ", tempNetworkOutput2)
+print("Output 3: ", tempNetworkOutput3)
+print("Output 4: ", tempNetworkOutput4)
+"""
+#================================================================== Bloemen ==================================================================
+
+trainingData = np.genfromtxt("iris.data", delimiter=",", usecols=[0,1,2,3])
+trainingDataOutput = np.genfromtxt("iris.data", delimiter=",", usecols=[4], dtype=str)
+convertedOutput = []
+
+for i in range(len(trainingDataOutput)):
+    if trainingDataOutput[i] == "Iris-setosa":
+        convertedOutput.append(list([1,0,0]))
+    if trainingDataOutput[i] == "Iris-versicolor":
+        convertedOutput.append(list([0,1,0]))
+    if trainingDataOutput[i] == "Iris-virginica":
+        convertedOutput.append(list([0,0,1]))
+
+irisNetwork = NeuralNetwork(4, 3, True, 0.1)
+irisNetwork.trainNetwork(trainingData, convertedOutput, 10000)
+
+
+while True:
+    print("Geef een index van de iris.data set")
+    dataSetIndex = input("Vul hier uw waarde in: ")
+    dataSetIndex = int(dataSetIndex)
+    
+    if dataSetIndex >= 0 and dataSetIndex <= len(trainingData-1):
+        print("Netwerk output: ", irisNetwork.generateNetworkOutputOnce(trainingData[dataSetIndex]))
+
+    else:
+        print("De ingevoerde index lag buiten de grootte van de trainingdataset!")
