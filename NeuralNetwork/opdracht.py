@@ -1,12 +1,11 @@
 import random
+import time
 import math
 import numpy as np
 
 random.seed(0)
 
 def calculateSigmoid(output):
-    #print("sigmoid input: ", output)
-    #print("sigmoid result: ", (1 / (1 + (math.e ** (-output)))))
     return (1 / (1 + (math.e ** (-output))))
 
 def calculateSigmoidDerivative(output):
@@ -74,7 +73,6 @@ class NeuralNetwork:
         else:
             raise Exception("networkInput cannot be of a different size than the inputLayer of the neural network")
 
-
     # Updates all the errors in the entire network based on the desiredOutput. Network needs to be ran at least once before calling this function. 
     def __backpropagation(self, desiredOutput):
 
@@ -89,7 +87,6 @@ class NeuralNetwork:
                 sumError += float(self.outputLayer[j].getError()) * self.outputLayer[j].getWeights(i)
             
             self.hiddenLayer[i].setError(calculateSigmoidDerivative(self.hiddenLayer[i].getNeuronInput()) * sumError)    
-
 
     # Updates the entire network. Should only be ran after calling backpropagation
     def __updateNetwork(self):
@@ -320,8 +317,12 @@ for i in range(len(trainingDataOutput)):
     if trainingDataOutput[i] == "Iris-virginica":
         convertedOutput.append(list([0,0,1]))
 
+
 irisNetwork = NeuralNetwork(4, 3, True, 0.1)
-irisNetwork.trainNetwork(trainingData, convertedOutput, 10000)
+tic = time.perf_counter()
+irisNetwork.trainNetwork(trainingData, convertedOutput, 2000)
+toc = time.perf_counter()
+print(f"Trained network in {toc - tic:0.4f} seconds")
 
 
 while True:
