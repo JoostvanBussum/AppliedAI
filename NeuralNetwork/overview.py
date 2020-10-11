@@ -121,7 +121,6 @@ print("Output 3: ", tempNetworkOutput3)
 print("Output 4: ", tempNetworkOutput4)
 """
 #================================================================== Bloemen ==================================================================
-
 trainingData = np.genfromtxt("iris.data", delimiter=",", usecols=[0,1,2,3])
 trainingDataOutput = np.genfromtxt("iris.data", delimiter=",", usecols=[4], dtype=str)
 convertedOutput = []
@@ -134,17 +133,63 @@ for i in range(len(trainingDataOutput)):
     if trainingDataOutput[i] == "Iris-virginica":
         convertedOutput.append(list([0,0,1]))
 
-irisNetwork = NeuralNetwork(4, 3, True, 0.1)
-irisNetwork.trainNetwork(trainingData, convertedOutput, 10000)
 
+irisNetwork = NeuralNetwork(4, 3, True, 0.1)
+tic = time.perf_counter()
+irisNetwork.trainNetwork(trainingData, convertedOutput, 2000)
+toc = time.perf_counter()
+print(f"Trained network in {toc - tic:0.4f} seconds")
+
+
+correctCounter = 0
+for i in range(len(trainingData)):
+    tempOutput = irisNetwork.generateNetworkOutputOnce(trainingData[i])
+
+    if convertedOutput[i][tempOutput.index(max(tempOutput))] == 1:
+        correctCounter += 1
+    else:
+        pass
+        #print("Index niet correct: ", i)
+
+print("Het neurale netwerk had: ", (correctCounter / len(trainingData) * 100), "% correct")
 
 while True:
     print("Geef een index van de iris.data set")
     dataSetIndex = input("Vul hier uw waarde in: ")
     dataSetIndex = int(dataSetIndex)
-    
-    if dataSetIndex >= 0 and dataSetIndex <= len(trainingData-1):
-        print("Netwerk output: ", irisNetwork.generateNetworkOutputOnce(trainingData[dataSetIndex]))
+
+    if dataSetIndex >= 0 and dataSetIndex <= len(trainingData)-1:
+
+        print("\nDe gekozen index: ", dataSetIndex, "klassificeerd als een: ", trainingDataOutput[dataSetIndex])
+
+        print("Generating network output: [          ]")
+        time.sleep(0.200)
+        print("Generating network output: [=         ]")
+        time.sleep(0.200)
+        print("Generating network output: [==        ]")
+        time.sleep(0.200)
+        print("Generating network output: [===       ]")
+        time.sleep(0.200)
+        print("Generating network output: [====      ]")
+        time.sleep(0.200)
+        print("Generating network output: [=====     ]")
+        time.sleep(0.200)
+        print("Generating network output: [======    ]")
+        time.sleep(0.200)
+        print("Generating network output: [=======   ]")
+        time.sleep(0.200)
+        print("Generating network output: [========  ]")
+        time.sleep(0.200)
+        print("Generating network output: [========= ]")
+        time.sleep(0.200)
+        print("Generating network output: [==========]")
+        time.sleep(0.200)
+
+        tempNetworkOutput = irisNetwork.generateNetworkOutputOnce(trainingData[dataSetIndex])
+        print("Het neurale netwerk is: ", round(tempNetworkOutput[0], 2)* 100, "% zeker dat deze invoerdata overeenkomt met een Iris-Setosa")
+        print("Het neurale netwerk is: ", round(tempNetworkOutput[1], 2)* 100, "% zeker dat deze invoerdata overeenkomt met een Iris-Versicolor")
+        print("Het neurale netwerk is: ", round(tempNetworkOutput[2], 2)* 100, "% zeker dat deze invoerdata overeenkomt met een Iris-Virginica\n")
 
     else:
-        print("De ingevoerde index lag buiten de grootte van de trainingdataset!")
+        print("De ingevoerde index lag buiten de grootte van de trainingdataset!\n")
+
