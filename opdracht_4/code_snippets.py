@@ -40,3 +40,11 @@ model = tf.keras.models.Sequential([
   tf.keras.layers.Dropout(0.2),
   tf.keras.layers.Dense(10)
 ])
+
+padding='same', strides=2
+
+'''
+import pickle , gzip , os
+from urllib import request
+from pylab import imshow , show , cm
+'''
