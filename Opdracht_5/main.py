@@ -8,10 +8,21 @@ import math
 import random
 
 class geneticIndividual:
-    def __init__(self):
+    def __init__(self, genotypeLength =10, genotype =None):
         self.fitness = 0
-        self.genotype = []
 
+        # If genotype is None we initialise the genotype randomly else we assign it the given genotype
+        if not genotype:
+            self.genotype = [random.randint(0,1) for i in range(genotypeLength)]
+            self.genotypeLength = genotypeLength
+        else:
+            self.genotype = genotype
+            self.genotypeLength = len(genotype)
+
+        # Evaluate fitness
+        self.evaluateFitness()
+
+    
     # Function to print genetic individuals
     def printGeneticIndividual(self):
         print("Fitness: ", self.fitness, " genotype: ", self.genotype)
@@ -23,10 +34,10 @@ class geneticIndividual:
         fitnessScore = 0
 
         # Count how many items are in pile 1, because if it is 1 or more the value needs to start at 1 else we multiply by 0
-        if genotype.count(1) >= 1:
-            MultiplyPileTotal = 1
+        if self.genotype.count(1) >= 1:
+            productPileTotal = 1
         else: 
-            MultiplyPileTotal = 0
+            productPileTotal = 0
 
         # Calculate the total value of the piles
         # Because i starts at 0 and every items value is equal to it's position we do i+1
@@ -35,50 +46,60 @@ class geneticIndividual:
             if self.genotype[i] == 0:
                 sumPileTotal += i+1
             else:
-                MultiplyPileTotal *= i+1
-            
-        # TODO implement a scoring method to determine fitness
+                productPileTotal *= i+1
+        
+        # TODO implement a scoring method to determine fitness according to scaled error method
+        self.fitness = (abs((sumPileTotal/36)/36) + abs((productPileTotal/360)/360)) * 100
 
-        return
-
+        
 class evolutionaryAlgorithm:
     population = []
 
-    def __init__(self, populationSize =100, numberOfGenerations =100, genotypeLength =10):
+    def __init__(self, populationSize =1000, numberOfGenerations =100, genotypeLength =10, mutateChance =0.01):
         self.populationSize = populationSize
         self.genotypeLength = genotypeLength
+        self.mutateChance = mutateChance
 
     # Function that randomly generates a starting population
     def generatePopulation(self):
         for i in range(self.populationSize):
             individual = geneticIndividual()
-            for j in range(self.genotypeLength):
-                individual.genotype.append(random.randint(0,1))
             self.population.append(individual)
         return
             
     # Function to print the population
     def printPopulation(self):
-        for individual in self.population:
+        graded = sorted(self.population, key=lambda x: x.fitness)
+        for individual in graded:
             individual.printGeneticIndividual()
         return
-
+    
+    # TODO implement evolve functie
+    def evolve(self):
+        # Sort the individuals by fitness in a new list
+        graded = sorted(self.population, key=lambda x: x.fitness)
+        parents    
+        return
+        
+        
     # TODO implement crossover function
     def crossover(self):
+        
         return
 
     # Function to mutate a population, the mutateChance is in percentage
     # We mutate by swapping one value to the other pile
-    def mutate(self, mutateChance =1):
+    def mutate(self):
 
-        # For each individual in the population there is a chance equal to mutateChance to be mutated
+        # For each gene for each individual in the population there is a chance equal to mutateChance to be mutated
         for individual in self.population:
-            if random.randint(1, 100) <= mutateChance:
-                mutateIndex = random.randint(0, self.genotypeLength-1)
-                individual.genotype[mutateIndex] ^= 1
+            for gene in range(len(individual.genotype)):
+                if random.uniform(0, 100) <= self.mutateChance:
+                    individual.genotype[gene] ^= 1
 
         return
 
 algoritme = evolutionaryAlgorithm()
 algoritme.generatePopulation()
-algoritme.mutate()
+algoritme.printPopulation()
+
