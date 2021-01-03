@@ -31,7 +31,6 @@ class geneticIndividual:
     # Function to determine the fitness of an individual
     def evaluateFitness(self):
         sumPileTotal = 0
-        fitnessScore = 0
 
         # Count how many items are in pile 1, because if it is 1 or more the value needs to start at 1 else we multiply by 0
         if self.genotype.count(1) >= 1:
@@ -55,10 +54,12 @@ class geneticIndividual:
 class evolutionaryAlgorithm:
     population = []
 
-    def __init__(self, populationSize =1000, numberOfGenerations =100, genotypeLength =10, mutateChance =0.01):
+    def __init__(self, populationSize =1000, numberOfGenerations =100, genotypeLength =10, mutateChance =0.01, retainModifier =0.2):
         self.populationSize = populationSize
         self.genotypeLength = genotypeLength
         self.mutateChance = mutateChance
+        self.retainModifier = retainModifier
+        self.retainLenght = abs(int(self.populationSize*retainModifier))
 
     # Function that randomly generates a starting population
     def generatePopulation(self):
@@ -78,7 +79,17 @@ class evolutionaryAlgorithm:
     def evolve(self):
         # Sort the individuals by fitness in a new list
         graded = sorted(self.population, key=lambda x: x.fitness)
-        parents    
+        retainedParents = graded[:self.retainLenght] #TODO fitness ff fixen (fitness 2800 is nu 'beste' individual)
+            
+        # Function or class parameter?
+        random_chance = 0.5
+        for individual in graded[self.retainLenght:]:
+            if random_chance >= random.uniform(0, 100):
+                retainedParents.append(individual)
+
+        desiredPopulationSize = self.populationSize - len(retainedParents)
+        children = []
+
         return
         
         
@@ -102,4 +113,3 @@ class evolutionaryAlgorithm:
 algoritme = evolutionaryAlgorithm()
 algoritme.generatePopulation()
 algoritme.printPopulation()
-
