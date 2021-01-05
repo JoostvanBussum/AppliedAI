@@ -7,6 +7,25 @@ import copy
 import math
 import random
 
+# Crossover Lambda's
+#====================
+
+#crossoverLambda = lambda child1, child2
+
+def crossoverSinglePoint(parents):
+
+    pointIndex = random.randint(1, parents[0].genotypeLength-1)
+
+    child1Genotype = parents[0].genotype[:pointIndex]
+    child1Genotype.append(parents[1].genotype[pointIndex:])
+
+    child2Genotype = parents[1].genotype[:pointIndex]
+    child2Genotype.append(parents[0].genotype[pointIndex:])
+
+    lijstje = [geneticIndividual(genotype = child1Genotype), geneticIndividual(genotype = child2Genotype)]
+    return lijstje
+#====================
+
 class geneticIndividual:
     def __init__(self, genotypeLength =10, genotype =None):
         self.fitness = 0
@@ -76,26 +95,33 @@ class evolutionaryAlgorithm:
         return
     
     # TODO implement evolve functie
-    def evolve(self):
+    def evolve(self, crossoverFunction):
         # Sort the individuals by fitness in a new list
         graded = sorted(self.population, key=lambda x: x.fitness)
         retainedParents = graded[:self.retainLenght] #TODO fitness ff fixen (fitness 2800 is nu 'beste' individual)
             
+        # Keep some less good parents for more diversity
         # Function or class parameter?
         random_chance = 0.5
         for individual in graded[self.retainLenght:]:
             if random_chance >= random.uniform(0, 100):
                 retainedParents.append(individual)
 
-        desiredPopulationSize = self.populationSize - len(retainedParents)
+        offspringAmount = self.populationSize - len(retainedParents)
         children = []
+        while  len(children) <= offspringAmount:
+            offspringChildren = crossoverFunction(random.sample(retainedParents, 2))
 
+            #children.append(crossover(random.sample(retainedParents, 2)))
+
+
+        retainedParents.append(children)
+        self.population = newPopulation
         return
         
         
     # TODO implement crossover function
-    def crossover(self):
-        
+    def crossover(self, crossoverFunction):
         return
 
     # Function to mutate a population, the mutateChance is in percentage
@@ -110,6 +136,8 @@ class evolutionaryAlgorithm:
 
         return
 
+
 algoritme = evolutionaryAlgorithm()
 algoritme.generatePopulation()
 algoritme.printPopulation()
+algoritme.evolve(crossoverSinglePoint)
