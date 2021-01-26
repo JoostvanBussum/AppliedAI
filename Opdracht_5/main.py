@@ -8,7 +8,7 @@ import random
 
 import numpy
 
-
+random.seed(0)
 class geneticIndividual:
 
     # Init function that can randomly assign values to the genotype or use a given genotype
@@ -57,12 +57,10 @@ class geneticIndividual:
         productPileScore = abs((productPileTotal/360 * 100) - perfectFitness)
         
         self.fitness = sumPileScore + productPileScore
-        #self.fitness = (abs((sumPileTotal/36)/36) + abs((productPileTotal/360)/360)) * 100
-
         
 class evolutionaryAlgorithm:
 
-    def __init__(self, populationSize =1000, numberOfGenerations =100, genotypeLength =10, mutateChance =25, retainModifier =0.2):
+    def __init__(self, populationSize =100, numberOfGenerations =100, genotypeLength =10, mutateChance =50, retainModifier =0.2):
         self.populationSize = populationSize
         self.generations = numberOfGenerations
         self.genotypeLength = genotypeLength
@@ -79,15 +77,15 @@ class evolutionaryAlgorithm:
             
     # Function to print the population
     def printPopulation(self):
-        graded = sorted(self.population, key=lambda x: x.fitness, reverse=True)
+        graded = sorted(self.population, key=lambda x: x.fitness, reverse=False)
         for individual in graded:
             individual.printGeneticIndividual()
     
-    # TODO implement evolve functie
+    # Evolve function that first selects parents and then does crossover and mutate
     def evolve(self):
         # Sort the individuals by fitness in a new list
-        graded = sorted(self.population, key=lambda x: x.fitness, reverse=True)
-        retainedParents = graded[:self.retainLenght] #TODO fitness ff fixen (fitness 2800 is nu 'beste' individual)
+        graded = sorted(self.population, key=lambda x: x.fitness, reverse=False)
+        retainedParents = graded[:self.retainLenght] 
         
         # Keep some less good parents for more diversity
         # Function or class parameter?
@@ -111,7 +109,6 @@ class evolutionaryAlgorithm:
             # Perform possible mutation on all the children
             children.append(self.mutate(offspringChildren[0]))
             children.append(self.mutate(offspringChildren[1]))
-            #print("children list: ", children)
 
 
         retainedParents.extend(children)
@@ -123,9 +120,6 @@ class evolutionaryAlgorithm:
 
         pointIndex = random.randint(1, parents[0].genotypeLength-1)
 
-        #print("parents to sexs: ", parents[0].genotype, ", ", parents[1].genotype)
-        #print("parents to sexs2: ", parents)
-        #print("point index: ", pointIndex)
 
         child1Genotype = parents[0].genotype[:pointIndex]
         child1Genotype.extend(parents[1].genotype[pointIndex:])
@@ -133,10 +127,7 @@ class evolutionaryAlgorithm:
         child2Genotype = parents[1].genotype[:pointIndex]
         child2Genotype.extend(parents[0].genotype[pointIndex:])
 
-        #print("Child 1 genotypes:", child1Genotype)
-        #print("Child 2 genotypes:", child2Genotype)
         children = [geneticIndividual(genotype = child1Genotype), geneticIndividual(genotype = child2Genotype)]
-        #print("Genotypelength: ", len(children[0].genotype))
         return children
 
     # Function to mutate a population, the mutateChance is in percentage
@@ -148,26 +139,29 @@ class evolutionaryAlgorithm:
             if random.uniform(0, 100) <= self.mutateChance:
                 #individual.genotype[gene] != individual.genotype[gene]
                 individual.genotype[gene] ^= 1
+                individual.evaluateFitness()
 
         return individual
 
     # Function that runs the whole algorithm an amount of times equal to generations
     def run(self):
-        generationcounter = 0
         for iteration in range(self.generations):
             self.evolve()
-            generationcounter += 1
 
-        return sorted(self.population, key=lambda x: x.fitness, reverse=True)
+        return sorted(self.population, key=lambda x: x.fitness, reverse=False)
 
 
 answerCounter = 0
+averageFitness = 0
 for i in range(100):
     algoritme = evolutionaryAlgorithm()
     algoritme.generatePopulation()
     result = algoritme.run()
-    print("Result: ", result[-1].printGeneticIndividual())
-    if result[-1].fitness == 0.0:
+    averageFitness += result[0].fitness
+    result[0].printGeneticIndividual()
+    if result[0].fitness == 0.0:
         answerCounter += 1
 
-print(answerCounter)
+averageFitness = averageFitness/100
+
+print(answerCounter, " , ", averageFitness)
