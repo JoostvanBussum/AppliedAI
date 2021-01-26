@@ -2,12 +2,17 @@
 # Every position in the list represents one of the numbers(it being equal to index+1) and the 0 or 1 represents in what pile the number is allocated to(0 being the sum pile and 1 being the multiply pile)
 # This way we can easily perform crossovers and mutations on the genotypes
 
-import numpy
 import copy
 import math
 import random
 
+import numpy
+
+
 class geneticIndividual:
+
+    # Init function that can randomly assign values to the genotype or use a given genotype
+    # also calculates the fitness upon being created
     def __init__(self, genotypeLength =10, genotype =None):
         self.fitness = 0
 
@@ -23,7 +28,7 @@ class geneticIndividual:
         self.evaluateFitness()
 
     
-    # Function to print genetic individuals
+    # Function to print the genetic individual
     def printGeneticIndividual(self):
         print("Fitness: ", self.fitness, " genotype: ", self.genotype)
 
@@ -46,15 +51,18 @@ class geneticIndividual:
                 sumPileTotal += i+1
             else:
                 productPileTotal *= i+1
+        perfectFitness = 100
+
+        sumPileScore = abs((sumPileTotal/36 * 100) - perfectFitness)
+        productPileScore = abs((productPileTotal/360 * 100) - perfectFitness)
         
-        # TODO implement a scoring method to determine fitness according to scaled error method
-        self.fitness = (abs((sumPileTotal/36)/36) + abs((productPileTotal/360)/360)) * 100
+        self.fitness = sumPileScore + productPileScore
+        #self.fitness = (abs((sumPileTotal/36)/36) + abs((productPileTotal/360)/360)) * 100
 
         
 class evolutionaryAlgorithm:
-    #population = []
 
-    def __init__(self, populationSize =1000, numberOfGenerations =5, genotypeLength =10, mutateChance =0.01, retainModifier =0.2):
+    def __init__(self, populationSize =1000, numberOfGenerations =100, genotypeLength =10, mutateChance =25, retainModifier =0.2):
         self.populationSize = populationSize
         self.generations = numberOfGenerations
         self.genotypeLength = genotypeLength
@@ -71,14 +79,14 @@ class evolutionaryAlgorithm:
             
     # Function to print the population
     def printPopulation(self):
-        graded = sorted(self.population, key=lambda x: x.fitness)
+        graded = sorted(self.population, key=lambda x: x.fitness, reverse=True)
         for individual in graded:
             individual.printGeneticIndividual()
     
     # TODO implement evolve functie
     def evolve(self):
         # Sort the individuals by fitness in a new list
-        graded = sorted(self.population, key=lambda x: x.fitness)
+        graded = sorted(self.population, key=lambda x: x.fitness, reverse=True)
         retainedParents = graded[:self.retainLenght] #TODO fitness ff fixen (fitness 2800 is nu 'beste' individual)
         
         # Keep some less good parents for more diversity
@@ -109,11 +117,15 @@ class evolutionaryAlgorithm:
         retainedParents.extend(children)
         self.population = retainedParents.copy()
         
-    # TODO implement crossover function
+    # Single point crossover function with the point being random
     def crossover(self, parents):
         
-        #print("parents to sexs: ", parents)
+
         pointIndex = random.randint(1, parents[0].genotypeLength-1)
+
+        #print("parents to sexs: ", parents[0].genotype, ", ", parents[1].genotype)
+        #print("parents to sexs2: ", parents)
+        #print("point index: ", pointIndex)
 
         child1Genotype = parents[0].genotype[:pointIndex]
         child1Genotype.extend(parents[1].genotype[pointIndex:])
@@ -121,10 +133,10 @@ class evolutionaryAlgorithm:
         child2Genotype = parents[1].genotype[:pointIndex]
         child2Genotype.extend(parents[0].genotype[pointIndex:])
 
-        print("Child 1 genotypes:", child1Genotype)
-        print("Child 2 genotypes:", child2Genotype)
+        #print("Child 1 genotypes:", child1Genotype)
+        #print("Child 2 genotypes:", child2Genotype)
         children = [geneticIndividual(genotype = child1Genotype), geneticIndividual(genotype = child2Genotype)]
-        print("Genotypelength: ", len(children[0].genotype))
+        #print("Genotypelength: ", len(children[0].genotype))
         return children
 
     # Function to mutate a population, the mutateChance is in percentage
@@ -134,21 +146,28 @@ class evolutionaryAlgorithm:
         # For each gene for each individual in the population there is a chance equal to mutateChance to be mutated
         for gene in range(len(individual.genotype)):
             if random.uniform(0, 100) <= self.mutateChance:
-                individual.genotype[gene] != individual.genotype[gene]
+                #individual.genotype[gene] != individual.genotype[gene]
+                individual.genotype[gene] ^= 1
 
         return individual
 
+    # Function that runs the whole algorithm an amount of times equal to generations
     def run(self):
         generationcounter = 0
         for iteration in range(self.generations):
             self.evolve()
             generationcounter += 1
 
-        return sorted(self.population, key=lambda x: x.fitness)
+        return sorted(self.population, key=lambda x: x.fitness, reverse=True)
 
 
-algoritme = evolutionaryAlgorithm()
-algoritme.generatePopulation()
-algoritme.printPopulation()
-algoritme.run()
-print("Result: ", algoritme.printPopulation())
+answerCounter = 0
+for i in range(100):
+    algoritme = evolutionaryAlgorithm()
+    algoritme.generatePopulation()
+    result = algoritme.run()
+    print("Result: ", result[-1].printGeneticIndividual())
+    if result[-1].fitness == 0.0:
+        answerCounter += 1
+
+print(answerCounter)
